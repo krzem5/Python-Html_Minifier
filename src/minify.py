@@ -437,10 +437,10 @@ def minify_html(html,fp,fp_b):
 					if (k[0]=="string" and ((sw==1 and tl[i+1][0]=="operator" and tl[i+1][1]==b":") or (sw==2 and tl[i+1][0] in ["stringM","stringE"]))):
 						il+=[(len(bf)+(1 if sw==2 else 0),len(bf)+len(k[1])+(1 if sw==2 else 0)-2,i)]
 						bf+=(b" " if sw==2 else b"")+k[1][1:-1]
-			elif (k[0]=="string" and JS_STRING_HTML_TAG_REGEX.match(k[1][1:])):
+			if (k[0]=="string" and JS_STRING_HTML_TAG_REGEX.match(k[1][1:])):
 				il+=[(len(bf),len(bf)+len(k[1])-2,i)]
 				bf+=k[1][1:-1]
-			if ((k[0]=="stringE" and si!=-1) or k[0]=="string"):
+			if ((k[0]=="stringE" and si!=-1) or (k[0]=="string" and si==-1)):
 				si=-1
 				i=0
 				while (i<len(bf)):
