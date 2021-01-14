@@ -2,4 +2,4 @@ import minify
 
 
 
-# minify.minify_html(...)
+minify.minify_html(...)

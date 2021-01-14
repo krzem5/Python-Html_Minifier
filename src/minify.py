@@ -34,8 +34,8 @@ CSS_PROPERTY_KEY_VALUE_REGEX=re.compile(br"\s*(.*?)\s*:\s*(.*?)\s*(?:;|$)")
 CSS_SELECTOR_COMMA_REGEX=re.compile(br",\s+")
 JS_REGEX_LIST={"dict":re.compile(br"""{\s*(?:[$a-zA-Z0-9_]+|'(?:[^'\\]|\\.)*'|^"(?:[^"\\]|\\.)*"|^`(?:[^`\\]|\\.)*`)\s*:\s*"""),"dict_elem":re.compile(br""",\s*(?:[$a-zA-Z0-9_]+|'(?:[^'\\]|\\.)*'|^"(?:[^"\\]|\\.)*"|^`(?:[^`\\]|\\.)*`)\s*:\s*"""),"float":re.compile(br"\d+\.\d*(?:[eE][-+]?\d+)?|^\d+(?:\.\d*)?[eE][-+]?\d+|^\.\d+(?:[eE][-+]?\d+)?"),"int":re.compile(br"0[xX][\da-fA-F]+|^0[0-7]*|^\d+"),"identifier":re.compile(br"\.?[$_a-zA-Z0-9_]+(?:\.[$_a-zA-Z0-9_]+)*"),"string":re.compile(br"""'(?:[^'\\]|\\.)*'|^"(?:[^"\\]|\\.)*"|^`(?:[^`\\]|\\.)*`"""),"regex":re.compile(br"\/(?:\\.|\[(?:\\.|[^\]])*\]|[^\/])+\/[gimy]*"),"line_break":re.compile(br"[\n\r]+|/\*(?:.|[\r\n])*?\*/"),"whitespace":re.compile(br"[\ \t]+|//.*?(?:[\r\n]|$)"),"operator":re.compile(bytes("|".join([re.sub(r"([\?\|\^\&\(\)\{\}\[\]\+\-\*\/\.])",r"\\\1",e) for e in JS_OPERATORS]),"utf-8"))}
 JS_STRING_HTML_TAG_REGEX=re.compile(br"<(/?(?:"+bytes(r"|".join(sorted(HTML_TAGS,key=lambda e:-len(e))),"utf-8")+b"))")
-CSS_WARN_IGNORE_TAGS=False
-JS_WARN_EXEC_TAGS=False
+CSS_WARN_IGNORE_TAGS=True
+JS_WARN_EXEC_TAGS=True
 
 
 
@@ -410,7 +410,6 @@ def minify_html(html,fp,fp_b):
 		if (bl!=0):
 			raise RuntimeError("JS Contains Some Unclosed Brackets")
 		si=-1
-		b=0
 		sw=0
 		bf=b""
 		il=[]
@@ -425,14 +424,9 @@ def minify_html(html,fp,fp_b):
 					il+=[(len(bf),len(bf)+len(k[1])-(2 if k[0]=="stringE" else 3),i)]
 					bf+=k[1][1:-(1 if k[0]=="stringE" else 2)]
 					sw=0
-					b=0
 				else:
 					if (k[0]=="operator"):
-						if (k[1] in b"([{"):
-							b+=1
-						elif (k[1] in b")]}"):
-							b-=1
-						elif (k[1]==b"?"):
+						if (k[1]==b"?"):
 							if (sw!=0):
 								raise RuntimeError("Nested Ternary Operators not Implemented!")
 							sw=1
@@ -443,7 +437,10 @@ def minify_html(html,fp,fp_b):
 					if (k[0]=="string" and ((sw==1 and tl[i+1][0]=="operator" and tl[i+1][1]==b":") or (sw==2 and tl[i+1][0] in ["stringM","stringE"]))):
 						il+=[(len(bf)+(1 if sw==2 else 0),len(bf)+len(k[1])+(1 if sw==2 else 0)-2,i)]
 						bf+=(b" " if sw==2 else b"")+k[1][1:-1]
-			if (k[0]=="stringE" and si!=-1):
+			elif (k[0]=="string" and JS_STRING_HTML_TAG_REGEX.match(k[1][1:])):
+				il+=[(len(bf),len(bf)+len(k[1])-2,i)]
+				bf+=k[1][1:-1]
+			if ((k[0]=="stringE" and si!=-1) or k[0]=="string"):
 				si=-1
 				i=0
 				while (i<len(bf)):
@@ -468,7 +465,7 @@ def minify_html(html,fp,fp_b):
 									for e in ev.split(b" "):
 										for sk in il:
 											if (sk[0]<=i+evi and i+evi<sk[1]):
-												if (tl[sk[2]][0]!="string" and b" " not in ev):
+												if ((tl[sk[2]][0]!="string" or k[0]=="string") and b" " not in ev):
 													cl.insert(0,(0,b"\""+e+b"\"",sk[2],i+evi-sk[0]-1))
 												else:
 													cl.insert(0,(0,e,sk[2],i+evi-sk[0]))
