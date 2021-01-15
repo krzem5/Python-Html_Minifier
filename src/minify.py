@@ -35,8 +35,6 @@ CSS_PROPERTY_KEY_VALUE_REGEX=re.compile(br"\s*(.*?)\s*:\s*(.*?)\s*(?:;|$)")
 CSS_SELECTOR_COMMA_REGEX=re.compile(br",\s+")
 JS_REGEX_LIST={"dict":re.compile(br"""{\s*(?:[$a-zA-Z0-9_]+|'(?:[^'\\]|\\.)*'|^"(?:[^"\\]|\\.)*"|^`(?:[^`\\]|\\.)*`)\s*:\s*"""),"dict_elem":re.compile(br""",\s*(?:[$a-zA-Z0-9_]+|'(?:[^'\\]|\\.)*'|^"(?:[^"\\]|\\.)*"|^`(?:[^`\\]|\\.)*`)\s*:\s*"""),"float":re.compile(br"\d+\.\d*(?:[eE][-+]?\d+)?|^\d+(?:\.\d*)?[eE][-+]?\d+|^\.\d+(?:[eE][-+]?\d+)?"),"int":re.compile(br"0[xX][\da-fA-F]+|0[0-7]*|\d+"),"identifier":re.compile(br"\.?[$_a-zA-Z0-9_]+(?:\.[$_a-zA-Z0-9_]+)*"),"string":re.compile(br"""'(?:[^'\\]|\\.)*'|^"(?:[^"\\]|\\.)*"|^`(?:[^`\\]|\\.)*`"""),"regex":re.compile(br"\/(?:\\.|\[(?:\\.|[^\]])*\]|[^\/])+\/[gimy]*"),"line_break":re.compile(br"[\n\r]+|/\*(?:.|[\r\n])*?\*/"),"whitespace":re.compile(br"[\ \t]+|//.*?(?:[\r\n]|$)"),"operator":re.compile(bytes("|".join([re.sub(r"([\?\|\^\&\(\)\{\}\[\]\+\-\*\/\.])",r"\\\1",e) for e in JS_OPERATORS]),"utf-8"))}
 JS_STRING_HTML_TAG_REGEX=re.compile(br"<(/?(?:"+bytes(r"|".join(sorted(HTML_TAGS,key=lambda e:-len(e))),"utf-8")+b"))")
-CSS_WARN_IGNORE_TAGS=True
-JS_WARN_EXEC_TAGS=True
 
 
 
@@ -106,7 +104,7 @@ def minify_html(html,fp,fp_b):
 				raise RuntimeError("CSS Selector Symbols '+' and '~' aren't Implemented Yet!")
 			if ((ss==b">" or st==b"*" or (len(st)>0 and st[:1]!=b"#") or (1 if len(st) else 0)+sc.count(b".")>1) and ps==-1):
 				ps=len(l)-(0 if (1 if len(st) else 0)+sc.count(b".")>1 else 1)
-			if (b":not" in se and CSS_WARN_IGNORE_TAGS==True):
+			if (b":not" in se):
 				print("CSS Selector :not(...) has been Ignored!")
 			l+=[(ss,st,sc,sp,se)]
 			j+=km.end(0)
