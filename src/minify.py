@@ -1,5 +1,4 @@
 import hashlib
-import ntpath
 import os
 import re
 import requests
@@ -41,12 +40,12 @@ JS_STRING_HTML_TAG_REGEX=re.compile(br"<(/?(?:"+bytes(r"|".join(sorted(HTML_TAGS
 def minify_html(html,fp,fp_b):
 	def _get_url_cache(url):
 		h=hashlib.md5(url).hexdigest()
-		if (not ntpath.exists("__url_cache")):
+		if (not os.path.exists("__url_cache")):
 			os.mkdir("__url_cache")
 		if (not hasattr(_get_url_cache,"_d")):
 			_get_url_cache._d={}
 		if (h not in _get_url_cache._d):
-			if (not ntpath.exists(f"__url_cache/{h}")):
+			if (not os.path.exists(f"__url_cache/{h}")):
 				print(f"    Downloading '{str(url,'utf-8')}'...")
 				with open(f"__url_cache/{h}","wb") as f:
 					_get_url_cache._d[h]=requests.get(url,headers={"User-Agent":USER_AGENT}).content
@@ -819,7 +818,7 @@ def minify_html(html,fp,fp_b):
 				pm[k]=v
 		v=None
 		if (t_nm==b"script" and b"type" in pm and pm[b"type"]==b"text/javascript" and b"src" in pm and b"async" not in pm and b"defer" not in pm):
-			if (ntpath.exists(fp_b+str(pm[b"src"],"utf-8"))):
+			if (os.path.exists(fp_b+str(pm[b"src"],"utf-8"))):
 				print(f"  Found Local JavaScript: '{fp_b+str(pm[b'src'],'utf-8')}'")
 				with open(fp_b+str(pm[b"src"],"utf-8"),"rb") as rf:
 					dt=rf.read()
@@ -831,7 +830,7 @@ def minify_html(html,fp,fp_b):
 				raise RuntimeError(f"Unable to Decode <script> src: '{pm[b'src']}'")
 			pm={b"type":b"text/javascript"}
 		elif (t_nm==b"link" and b"rel" in pm and pm[b"rel"]==b"stylesheet" and b"href" in pm):
-			if (ntpath.exists(fp_b+str(pm[b"href"],"utf-8"))):
+			if (os.path.exists(fp_b+str(pm[b"href"],"utf-8"))):
 				print(f"  Found Local CSS: '{fp_b+str(pm[b'href'],'utf-8')}'")
 				with open(fp_b+str(pm[b"href"],"utf-8"),"rb") as rf:
 					dt=rf.read()
